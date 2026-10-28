@@ -122,44 +122,41 @@ void loop(){
     for (int i = 0; i < LED_COUNT; i++){
       pixels.setPixelColor(i, white);
     }
-    pixels.show();
-    delay(10);
-    return; // 通常パターンで白点灯を上書きしない
-  }
-
-  // ---- 描画：Segment A（流れパターン）----
-  for (int i = SEG_A_START; i <= SEG_A_END; i++){
-    int rel = i - SEG_A_START;
-    int idx;
+  } else {
+    // ---- 描画：Segment A（流れパターン）----
+    for (int i = SEG_A_START; i <= SEG_A_END; i++){
+      int rel = i - SEG_A_START;
+      int idx;
 #if REVERSE_FLOW
-    idx = ((rel - chaseStep) % PATTERN_PERIOD + PATTERN_PERIOD) % PATTERN_PERIOD;
+      idx = ((rel - chaseStep) % PATTERN_PERIOD + PATTERN_PERIOD) % PATTERN_PERIOD;
 #else
-    idx = (rel + chaseStep) % PATTERN_PERIOD;
+      idx = (rel + chaseStep) % PATTERN_PERIOD;
 #endif
-    uint32_t col = (idx < PATTERN_BLOCK) ? colWhite((uint8_t)b) : colBlue((uint8_t)b);
-    pixels.setPixelColor(i, col);
-  }
+      uint32_t col = (idx < PATTERN_BLOCK) ? colWhite((uint8_t)b) : colBlue((uint8_t)b);
+      pixels.setPixelColor(i, col);
+    }
 
-  // ---- 描画：Segment B（フェーズ）----
-  // いったんB領域は全消灯
-  for (int i = SEG_B_START; i <= SEG_B_END; i++){
-    pixels.setPixelColor(i, COL_OFF);
-  }
+    // ---- 描画：Segment B（フェーズ）----
+    // いったんB領域は全消灯
+    for (int i = SEG_B_START; i <= SEG_B_END; i++){
+      pixels.setPixelColor(i, COL_OFF);
+    }
 
-  // phaseIndex 0..8 → Phase01..09 を点灯、9 → Phase10(全消灯)
-  if (phaseIndex < 9){
-    Range r = PHASES[phaseIndex];
-    for (int i = r.s; i <= r.e; i++){
-      if (phaseIndex == 5 && i == 74){ // Phase06 & LED74
-        pixels.setPixelColor(i, colOrange((uint8_t)b));
-      } else {
-        pixels.setPixelColor(i, colWhite((uint8_t)b));
+    // phaseIndex 0..8 → Phase01..09 を点灯、9 → Phase10(全消灯)
+    if (phaseIndex < 9){
+      Range r = PHASES[phaseIndex];
+      for (int i = r.s; i <= r.e; i++){
+        if (phaseIndex == 5 && i == 74){ // Phase06 & LED74
+          pixels.setPixelColor(i, colOrange((uint8_t)b));
+        } else {
+          pixels.setPixelColor(i, colWhite((uint8_t)b));
+        }
       }
     }
+    // phaseIndex==9 のときは何も点けない（全消灯のまま）
   }
-  // phaseIndex==9 のときは何も点けない（全消灯のまま）
 
-  // ---- 反映 ----
+  // ---- 反映（白点灯・通常パターンで共通）----
   pixels.show();
   delay(10); // 軽い休止（タイミング制御は上のmillis）
 }
