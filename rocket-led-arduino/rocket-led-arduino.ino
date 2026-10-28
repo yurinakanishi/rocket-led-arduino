@@ -2,6 +2,7 @@
 // ---------------------------------------------
 // A0: Brightness（RGB直スケール / setBrightness不使用）
 // A1: Speed（Segment Aの流れ & Segment Bのフェーズ切替）
+// D10: 押している間だけ全LEDを白で点灯（INPUT_PULLUP / LOWで押下）
 //
 // Segment A (0..32):
 //   PATTERN_BLOCK=3 → "WWWBBB" / =2 → "WWBB"
@@ -21,6 +22,7 @@
 // ===== 配線・基本設定 =====
 const int DIN_PIN    = 1;     // D1
 const int LED_COUNT  = 108;   // 0..107
+const int WHITE_BUTTON_PIN = 10; // ボタンをD10とGNDの間に接続
 
 // Segment A の流れ方向（Bのフェーズには影響しない）
 #define REVERSE_FLOW 1        // 0:右流れ, 1:左流れ
@@ -79,6 +81,7 @@ static inline uint32_t colOrange(uint8_t b){ return pixels.Color(b, b/3, 0); }
 static const uint32_t COL_OFF = 0;
 
 void setup(){
+  pinMode(WHITE_BUTTON_PIN, INPUT_PULLUP);
   pixels.begin();
   pixels.clear();
   pixels.show();
@@ -111,6 +114,17 @@ void loop(){
   if (now - lastPhase >= phaseDelayMs){
     lastPhase = now;
     phaseIndex = (phaseIndex + 1) % PHASE_COUNT; // 0..9
+  }
+
+  // ---- ボタン押下中は全LEDを白で点灯（A0の明るさを反映）----
+  if (digitalRead(WHITE_BUTTON_PIN) == LOW){
+    uint32_t white = colWhite((uint8_t)b);
+    for (int i = 0; i < LED_COUNT; i++){
+      pixels.setPixelColor(i, white);
+    }
+    pixels.show();
+    delay(10);
+    return; // 通常パターンで白点灯を上書きしない
   }
 
   // ---- 描画：Segment A（流れパターン）----
